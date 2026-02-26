@@ -1,6 +1,0 @@
-[submodule "framework-api-restfull-crud"]
-	path = framework-api-restfull-crud
-	url = https://github.com/igor-ribeiro-sousa/framework-api-restfull-crud
-[submodule "use-api-framework"]
-	path = use-api-framework
-	url = https://github.com/igor-ribeiro-sousa/use-api-framework
