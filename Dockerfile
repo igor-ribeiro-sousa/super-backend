@@ -9,7 +9,7 @@ COPY pom.xml .
 COPY framework-api-restfull-crud/pom.xml framework-api-restfull-crud/
 COPY use-api-framework/pom.xml use-api-framework/
 
-# Baixa as dependências offline antes de copiar o código (cache do Docker)
+# Instala o framework no repositório local do build para que a API possa encontrá-lo
 RUN mvn dependency:go-offline -B
 
 # Copia os fontes dos módulos
@@ -18,6 +18,8 @@ COPY use-api-framework/src use-api-framework/src
 
 # Build completo: o Maven já resolve a ordem (framework antes da api)
 RUN mvn clean install -DskipTests
+
+
 
 # Etapa 2 - Runtime
 FROM eclipse-temurin:11-jre-alpine

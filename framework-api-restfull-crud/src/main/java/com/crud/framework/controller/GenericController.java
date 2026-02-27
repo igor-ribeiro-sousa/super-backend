@@ -1,10 +1,7 @@
 package com.crud.framework.controller;
 
 import java.util.List;
-import java.util.Objects;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,105 +10,91 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import com.crud.framework.config.GenericMapper;
 import com.crud.framework.response.ResponseAPI;
 import com.crud.framework.service.GenericService;
 
 public abstract class GenericController<T, D, ID> {
+
+	protected final GenericService<T, ID> service;
+	protected final GenericMapper genericMapper;
 	
-	@Autowired
-    protected GenericService<T, D, ID> service;
-	
-	public GenericController(GenericService<T, D, ID> service) {
+	private final Class<T> entityClass;
+    private final Class<D> dtoClass;
+
+	public GenericController(GenericService<T, ID> service, GenericMapper genericMapper, Class<T> entityClass, Class<D> dtoClass) {
         this.service = service;
+        this.genericMapper = genericMapper;
+        this.entityClass = entityClass;
+        this.dtoClass = dtoClass;
     }
-    
-
+	
 	@GetMapping
-	@SuppressWarnings("unchecked")
-    public final ResponseEntity<ResponseAPI<D>> pesquisar() {
-    	ResponseAPI<D> response = new ResponseAPI<>();
-    	
-    	try {
-    		List<D> data = service.pesquisar();
-    		
-    		response.setData((D) data);
-    		
-    		return ResponseEntity.ok(response);
-    		
-    	} catch(Exception e) {
-    		response.getErrors().add(e.getMessage());
-    		return ResponseEntity.badRequest().body(response);
-    	}
-    }
+	public final ResponseEntity<ResponseAPI<List<D>>> pesquisar() {
 
-    @GetMapping("/{id}")
-    public final ResponseEntity<ResponseAPI<D>> pesquisarPorId(@PathVariable("id") ID id) {
-	    ResponseAPI<D> response = new ResponseAPI<>();
-	    
-	    try {
-	    	 D data = service.pesquisarPorId(id);
-	         
-	         if (Objects.isNull(data)) {
-	             response.getErrors().add("Registro não encontrado.");
-	             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-	             
-	         }
-	         response.setData(data);
-	         
-	         return ResponseEntity.ok(response);
-	         
-	    } catch (Exception e) {
-	        response.getErrors().add(e.getMessage());
-	        return ResponseEntity.badRequest().body(response);
-	    }
+		List<T> entities = this.service.pesquisar();
+		
+		List<D> resultados = this.genericMapper.convertListEntityToListDTO(entities, dtoClass);
+
+		ResponseAPI<List<D>> response = new ResponseAPI<>();
+		response.setData(resultados);
+
+		return ResponseEntity.ok(response);
 	}
 
-    @PostMapping
-    public final ResponseEntity<ResponseAPI<D>> inserir(@RequestBody D entityDTO) {
-        ResponseAPI<D> response = new ResponseAPI<>();
-        
-        try {
-             D data = service.inserir(entityDTO);
-             
-             response.setData(data);
-             
-             return ResponseEntity.ok(response);
-             
-        } catch (Exception e) {
-            response.getErrors().add(e.getMessage());
-            return ResponseEntity.badRequest().body(response);
-        }
-    }
-    
-    @PutMapping("{id}")
+	@GetMapping("/{id}")
+	public final ResponseEntity<ResponseAPI<D>> pesquisarPorId(@PathVariable("id") ID id) {
+
+		T entidade = this.service.pesquisarPorId(id);
+
+		D resultado = this.genericMapper.convertToDTO(entidade, dtoClass);
+		
+		ResponseAPI<D> response = new ResponseAPI<>();
+		response.setData(resultado);
+
+		return ResponseEntity.ok(response);
+		
+	}
+
+	@PostMapping
+	public final ResponseEntity<ResponseAPI<D>> inserir(@RequestBody D entityDTO) {
+		
+		T entidade = this.genericMapper.convertToEntity(entityDTO, entityClass);
+		
+		T resultado = this.service.inserir(entidade);
+
+		D resultadoDTO = this.genericMapper.convertToDTO(resultado, dtoClass);
+
+		ResponseAPI<D> response = new ResponseAPI<>();
+		response.setData(resultadoDTO);
+
+		return ResponseEntity.ok(response);
+		
+	}
+
+	@PutMapping("{id}")
 	public final ResponseEntity<ResponseAPI<D>> alterar(@PathVariable ID id, @RequestBody D entityDTO) {
-	    ResponseAPI<D> response = new ResponseAPI<>();
-	    
-	    try {
-	        D data = service.alterar(id, entityDTO);
-	        
-            response.setData(data);
-            
-            return ResponseEntity.ok(response);
-            
-	    } catch (Exception e) {
-	        response.getErrors().add(e.getMessage());
-	        return ResponseEntity.badRequest().body(response);
-	    }
+		
+		T entidade = this.genericMapper.convertToEntity(entityDTO, entityClass);
+
+		T resultado = this.service.alterar(id, entidade);
+
+		D resultadoDTO = this.genericMapper.convertToDTO(resultado, dtoClass);
+		
+		ResponseAPI<D> response = new ResponseAPI<>();
+		response.setData(resultadoDTO);
+
+		return ResponseEntity.ok(response);
+		
 	}
 
-    @DeleteMapping("/{id}")
-    public final ResponseEntity<ResponseAPI<Void>> deletar(@PathVariable("id") ID id) {
-	    ResponseAPI<Void> response = new ResponseAPI<>();
-	    
-	    try {
-	        service.deletar(id);
-	        
-	        return ResponseEntity.ok(response);
-	        
-	    } catch (Exception e) {
-	        response.getErrors().add(e.getMessage());
-	        return ResponseEntity.badRequest().body(response);
-	    }
+	@DeleteMapping("/{id}")
+	public final ResponseEntity<ResponseAPI<Void>> deletar(@PathVariable("id") ID id) {
+		
+		this.service.deletar(id);
+
+		ResponseAPI<Void> response = new ResponseAPI<>();
+		return ResponseEntity.ok(response);
+		
 	}
 }
