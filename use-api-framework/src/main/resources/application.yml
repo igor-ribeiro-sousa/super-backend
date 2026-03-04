@@ -12,4 +12,7 @@ spring:
         format_sql: true
 
 server:
+  servlet:
+    context-path: /api
+    
   port: 8081

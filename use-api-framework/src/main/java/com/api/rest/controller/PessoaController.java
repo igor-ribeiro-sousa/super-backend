@@ -11,7 +11,7 @@ import com.crud.framework.service.GenericService;
 
 
 @RestController
-@RequestMapping("/api/pessoa")
+@RequestMapping("/pessoa")
 public class PessoaController extends GenericController<Pessoa, PessoaDTO, Long> {
 	
     public PessoaController(GenericService<Pessoa, Long> service, GenericMapper mapper) {
